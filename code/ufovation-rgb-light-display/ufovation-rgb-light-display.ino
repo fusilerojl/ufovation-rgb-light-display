@@ -1,0 +1,125 @@
+// Pin definitions for each RGB LED set
+Code
+int red1 = 13, green1 = 12, blue1 = 11;
+int red2 = 10, green2 = 9, blue2 = 8;
+int red3 = 7, green3 = 6, blue3 = 5;
+// Independent RGB LED set
+int red4 = 4, green4 = 3, blue4 = 2;
+// Independent White LED pin
+int whiteLED = A5;
+// New Red LED set with A0, A1, A2
+int redA0 = A0, redA1 = A1, redA2 = A2;
+// Timing variables for the independent RGB sets and White LED
+unsigned long previousMillisRGB4 = 0;
+unsigned long previousMillisWhite = 0;
+unsigned long previousMillisA0A2 = 0;
+unsigned long previousMillisRGB[3] = {0, 0, 0}; // For 1st, 2nd, and 3rd RGB sets
+int currentColorIndexRGB4 = 0;
+int currentColorIndexRGB[3] = {0, 0, 0}; // For color index of each RGB set
+// Timing intervals
+const long intervalRGB = 300; // 0.3-second interval for RGB sets
+const long intervalWhite = 300; // 0.3-second interval for White LED
+const long intervalA0 = 150; // 0.15-second interval for A0 blinking (faster)
+const long intervalA0A2 = 300; // Timing check interval for A0-A2 cycle
+void setup() {
+// Initialize all RGB LED pins as OUTPUT
+pinMode(red1, OUTPUT); pinMode(green1, OUTPUT); pinMode(blue1, OUTPUT);
+pinMode(red2, OUTPUT); pinMode(green2, OUTPUT); pinMode(blue2, OUTPUT);
+pinMode(red3, OUTPUT); pinMode(green3, OUTPUT); pinMode(blue3, OUTPUT);
+// Initialize the independent RGB set
+pinMode(red4, OUTPUT); pinMode(green4, OUTPUT); pinMode(blue4, OUTPUT);
+// Initialize the independent White LED
+pinMode(whiteLED, OUTPUT);
+// Initialize the new Red LED set (A0, A1, A2)
+pinMode(redA0, OUTPUT); pinMode(redA1, OUTPUT); pinMode(redA2, OUTPUT);
+// Initialize random seed
+randomSeed(analogRead(0));
+}
+void loop() {
+// Randomized RGB blink animation for the 1st, 2nd, and 3rd LED sets (Independent timing)rgbRandomBlink(0, red1, green1, blue1);
+rgbRandomBlink(1, red2, green2, blue2);
+rgbRandomBlink(2, red3, green3, blue3);
+// Independently control the 4th RGB LED set
+independentRgbCycleRGB4();
+// Independently control the White LED after RGB cycle is complete
+independentWhiteLED();
+// Independently control the new A0, A1, A2 RGB set
+independentA0A2Blink();
+}
+// Function to randomly blink through Yellow, Cyan, and Magenta (with independent timing)
+void rgbRandomBlink(int setIndex, int redPin, int greenPin, int bluePin) {
+unsigned long currentMillis = millis();
+if (currentMillis - previousMillisRGB[setIndex] >= intervalRGB) {
+previousMillisRGB[setIndex] = currentMillis;
+int randomColor = random(0, 3);
+switch (randomColor) {
+case 0: // Yellow (Red + Green)
+digitalWrite(redPin, HIGH);
+digitalWrite(greenPin, HIGH);
+digitalWrite(bluePin, LOW);
+break;
+case 1: // Cyan (Green + Blue)
+digitalWrite(redPin, LOW);
+digitalWrite(greenPin, HIGH);
+digitalWrite(bluePin, HIGH);
+break;
+case 2: // Magenta (Red + Blue)
+digitalWrite(redPin, HIGH);
+digitalWrite(greenPin, LOW);
+digitalWrite(bluePin, HIGH);
+break;
+}
+delay(300); // Hold the color for 0.3 seconds
+digitalWrite(redPin, LOW);
+digitalWrite(greenPin, LOW);
+digitalWrite(bluePin, LOW);
+}
+}
+// Function to independently cycle through Yellow, Cyan, and Magenta for the 4th RGB LED set
+void independentRgbCycleRGB4() {
+unsigned long currentMillis = millis();
+if (currentMillis - previousMillisRGB4 >= intervalRGB) {
+previousMillisRGB4 = currentMillis;
+digitalWrite(red4, LOW);
+digitalWrite(green4, LOW);
+digitalWrite(blue4, LOW);
+switch (currentColorIndexRGB4) {
+case 0: // Yellow (Red + Green)
+digitalWrite(red4, HIGH);
+digitalWrite(green4, HIGH);
+break;
+case 1: // Cyan (Green + Blue)
+digitalWrite(green4, HIGH);
+digitalWrite(blue4, HIGH);
+break;
+case 2: // Magenta (Red + Blue)
+digitalWrite(red4, HIGH);
+digitalWrite(blue4, HIGH);
+break;
+}
+currentColorIndexRGB4 = (currentColorIndexRGB4 + 1) % 3;
+}
+}
+// Function to control the White LED
+void independentWhiteLED() {
+unsigned long currentMillis = millis();
+if (currentMillis - previousMillisWhite >= intervalWhite) {
+previousMillisWhite = currentMillis;
+digitalWrite(whiteLED, HIGH); // White LED stays ON
+}
+}
+/
+// Function to independently control A0 blinking and keep A1 ON, A2 OFF
+void independentA0A2Blink() {
+unsigned long currentMillis = millis();
+// Blinking A0 independently with faster timing
+if (currentMillis - previousMillisA0A2 >= intervalA0) {
+previousMillisA0A2 = currentMillis;
+bool a0State = digitalRead(redA0);
+digitalWrite(redA0, !a0State); // Toggle A0 state for faster blinking
+}
+// Keep A1 ON continuously
+digitalWrite(redA1, HIGH);
+// Keep A2 OFF
+digitalWrite(redA2, LOW);
+}
